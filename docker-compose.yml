@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: db_name
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mynetwork
+
+  get_data:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - database
+    environment:
+      - db_url=postgresql+psycopg2://user:password@database/db_name
+    networks:
+      - mynetwork
+
+  telegram_bot:
+    build:
+      context: .
+      dockerfile: utils/Dockerfile
+    depends_on:
+      - database
+    environment:
+      - db_url=postgresql+psycopg2://user:password@database/db_name
+      - TOKEN=7079282317:AAGUX4cOs43GoEVrkr-JGvxpK1A76mf_X-0
+    networks:
+      - mynetwork
+
+  cron:
+    build:
+      context: .
+      dockerfile: cron/Dockerfile
+    depends_on:
+      - database
+    environment:
+      - db_url=postgresql+psycopg2://user:password@database/db_name
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  postgres_data:
